@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Colors } from '../constants/colors';
 
 interface PadosiLogoProps {
@@ -10,9 +10,11 @@ interface PadosiLogoProps {
 export const PadosiLogo: React.FC<PadosiLogoProps> = ({ showLabel = true }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.logoBox}>
-        <Ionicons name="home" size={26} color={Colors.logoSymbol} />
-      </View>
+      <Image 
+        source={require('../../assets/padosipro-logo.svg')} 
+        style={styles.logoImage} 
+        contentFit="contain"
+      />
       {showLabel && <Text style={styles.label}>PadosiPro</Text>}
     </View>
   );
@@ -23,13 +25,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 20
   },
-  logoBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: Colors.logoBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
+  logoImage: {
+    width: 58,
+    height: 58,
     marginBottom: 8
   },
   label: {

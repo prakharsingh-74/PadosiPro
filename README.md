@@ -33,6 +33,7 @@ The backend handles the business logic, secure OTP generation, and database inte
    - `SUPABASE_URL`: Your Supabase project URL (found in Project Settings -> API).
    - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role key (found in the same API section). *Note: Keep this secret!*
    - `JWT_SECRET`: Any random long string (e.g., `my_super_secret_jwt_key_12345`).
+   - `SMTP_*`: (Optional) Your email provider credentials to send real OTP emails. If left blank, it defaults to a simulated email service (Ethereal) and prints a preview link in the terminal!
 
 ### 3. Install & Run
 1. Open your terminal and go to the backend folder:
