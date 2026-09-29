@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  Linking
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -22,6 +23,13 @@ export default function HomeScreen() {
       pathname: '/account',
       params: params // pass along the profile details to account screen
     });
+  };
+
+  const handleChat = () => {
+    const phoneNumber = '919000000001';
+    const message = 'Hi Pilot LM, I have a question.';
+    const url = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+    Linking.openURL(url).catch((err) => console.error("Couldn't open WhatsApp", err));
   };
 
   return (
@@ -50,12 +58,12 @@ export default function HomeScreen() {
         {/* Categories Section */}
         <Text style={styles.sectionHeader}>POPULAR WITH FAMILIES LIKE YOURS</Text>
         <View style={styles.categoriesGrid}>
-          <CategoryPill icon="check-square" label="Errands & Daily Tasks" />
-          <CategoryPill icon="home" label="Home Services" />
-          <CategoryPill icon="map-pin" label="Travel & Tourism" />
-          <CategoryPill icon="heart" label="Health & Medical" />
-          <CategoryPill icon="users" label="Senior Care" />
-          <CategoryPill icon="calendar" label="Events & Management" />
+          <CategoryPill icon="check-square" label="Errands & Daily Tasks" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-1' }})} />
+          <CategoryPill icon="home" label="Home Services" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-2' }})} />
+          <CategoryPill icon="map-pin" label="Travel & Tourism" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-3' }})} />
+          <CategoryPill icon="heart" label="Health & Medical" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-4' }})} />
+          <CategoryPill icon="users" label="Senior Care" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-5' }})} />
+          <CategoryPill icon="calendar" label="Events & Management" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-6' }})} />
         </View>
         <TouchableOpacity onPress={() => router.push('/task-selection')}>
           <Text style={styles.browseLink}>Browse everything we do <Feather name="arrow-right" size={14} /></Text>
@@ -89,7 +97,7 @@ export default function HomeScreen() {
             <Text style={styles.lmLabel}>Your Lifestyle Manager</Text>
             <Text style={styles.lmName}>Pilot LM</Text>
           </View>
-          <TouchableOpacity style={styles.chatButton}>
+          <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
             <Feather name="message-circle" size={16} color="#0E2925" />
             <Text style={styles.chatButtonText}>Chat</Text>
           </TouchableOpacity>
@@ -100,8 +108,8 @@ export default function HomeScreen() {
 }
 
 // Components
-const CategoryPill = ({ icon, label }: { icon: any, label: string }) => (
-  <TouchableOpacity style={styles.pillContainer}>
+const CategoryPill = ({ icon, label, onPress }: { icon: any, label: string, onPress?: () => void }) => (
+  <TouchableOpacity style={styles.pillContainer} onPress={onPress}>
     <Feather name={icon} size={14} color="#137333" />
     <Text style={styles.pillText}>{label}</Text>
   </TouchableOpacity>

@@ -7,92 +7,72 @@ import {
   ScrollView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const CATEGORIES = [
-  {
-    id: 'cat-1',
-    name: 'Errands & Daily Tasks',
-    desc: 'Bills, banks, documents, government work',
-    icon: 'check-square',
-    subTasks: ['Pickups & Deliveries', 'Payments & Renewals', 'Documents & Government', 'Shopping']
-  },
-  {
-    id: 'cat-2',
-    name: 'Home Services',
-    desc: 'AC, plumbing, electrical, cleaning, repairs',
-    icon: 'home',
-    subTasks: ['Cleaning', 'Repairs', 'Appliances & Utilities', 'Property & Society']
-  },
-  {
-    id: 'cat-3',
-    name: 'Travel & Tourism',
-    desc: 'Flights, hotels, visas, transfers, itineraries',
-    icon: 'map-pin',
-    subTasks: ['Book Travel', 'On-Trip Support', 'Documents & Visa', 'Local Transport']
-  },
-  {
-    id: 'cat-4',
-    name: 'Health & Medical',
-    desc: 'Doctor visits, pharmacy, labs, physio',
-    icon: 'heart',
-    subTasks: ['Appointments & Tests', 'Records & Reports', 'Hospital & Emergency', 'Insurance & Claims']
-  },
-  {
-    id: 'cat-5',
-    name: 'Senior Care',
-    desc: 'Check-ins, medicines, vitals, companionship',
-    icon: 'users',
-    subTasks: ['Daily Care', 'Medical Support', 'Safety & Mobility', 'Family Coordination']
-  },
-  {
-    id: 'cat-6',
-    name: 'Events & Management',
-    desc: 'Weddings, décor, catering, photography',
-    icon: 'calendar',
-    subTasks: ['Party Planning', 'Vendor Management', 'Decor & Setup', 'Catering']
-  },
-  {
-    id: 'cat-7',
-    name: 'Workforce Management',
-    desc: 'Maids, cooks, drivers, nannies, payroll',
-    icon: 'briefcase',
-    subTasks: ['Hiring & Payroll', 'Background Checks', 'Replacements']
-  },
-  {
-    id: 'cat-8',
-    name: 'Digital & Tech Help',
-    desc: 'WiFi, CCTV, smart locks, device repair',
-    icon: 'wifi',
-    subTasks: ['Network Setup', 'Device Troubleshooting', 'Smart Home Setup']
-  },
-  {
-    id: 'cat-9',
-    name: 'Relocation Services',
-    desc: 'Packers, movers, handover, paperwork',
-    icon: 'truck',
-    subTasks: ['Packing & Moving', 'End-of-lease Cleaning', 'New Home Setup']
-  },
-  {
-    id: 'cat-10',
-    name: 'NutriFix',
-    desc: 'Groceries, food delivery, diet plans, meal prep',
-    icon: 'shopping-bag',
-    subTasks: [],
-    isSoon: true
-  }
-];
+interface SubTask {
+  name: string;
+  services?: string[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  desc: string;
+  icon: string;
+  subTasks: SubTask[];
+  isSoon?: boolean;
+}
+
+import { ActivityIndicator } from 'react-native';
+import { TaskAPI } from '../api/task.api';;
 
 export default function TaskSelectionScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
 
-  // Match the screenshot: Home Services expanded by default
-  const [expandedCategory, setExpandedCategory] = useState<string | null>('cat-2');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Expand the category passed from home screen, otherwise default to null initially
+  const [expandedCategory, setExpandedCategory] = useState<string | null>((params.categoryId as string) || null);
+  const [selectedSubTask, setSelectedSubTask] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    TaskAPI.getCatalog().then(data => {
+      const mapped: Category[] = data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        desc: c.description,
+        icon: c.icon_name,
+        isSoon: c.is_soon,
+        subTasks: (c.tasks || []).map((t: any) => ({
+          name: t.name,
+          services: t.services
+        }))
+      }));
+      setCategories(mapped);
+      
+      // If we didn't get a categoryId from params and we now have categories,
+      // expand the first one (or keep the param one).
+      if (!params.categoryId && mapped.length > 0) {
+        setExpandedCategory(mapped[0].id);
+      } else if (params.categoryId) {
+        // Find if the ID passed actually exists, otherwise fallback
+        const exists = mapped.find(c => c.id === params.categoryId);
+        if (!exists && mapped.length > 0) setExpandedCategory(mapped[0].id);
+      }
+      
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, [params.categoryId]);
 
   const handleContinue = () => {
-    // Return back to Home or wherever appropriate
-    router.replace('/home');
+    router.push('/task-timing');
   };
 
   return (
@@ -115,8 +95,14 @@ export default function TaskSelectionScreen() {
         </Text>
 
         {/* Categories List */}
-        <View style={styles.listContainer}>
-          {CATEGORIES.map((cat) => {
+        {loading ? (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#137333" />
+            <Text style={{ marginTop: 10, color: '#5C736C' }}>Loading services...</Text>
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            {categories.map((cat) => {
             const isSelected = expandedCategory === cat.id;
 
             return (
@@ -151,18 +137,52 @@ export default function TaskSelectionScreen() {
                   <View style={styles.expandedContent}>
                     <Text style={styles.subtasksTitle}>WHAT KIND OF HELP?</Text>
                     <View style={styles.subtasksGrid}>
-                      {cat.subTasks.map((sub, idx) => (
-                        <TouchableOpacity key={idx} style={styles.subtaskPill}>
-                          <Text style={styles.subtaskText}>{sub}</Text>
-                        </TouchableOpacity>
-                      ))}
+                      {cat.subTasks.map((sub, idx) => {
+                        const isSubSelected = selectedSubTask === sub.name;
+                        return (
+                          <TouchableOpacity 
+                            key={idx} 
+                            style={[styles.subtaskPill, isSubSelected && styles.subtaskPillSelected]}
+                            onPress={() => {
+                              setSelectedSubTask(isSubSelected ? null : sub.name);
+                              setSelectedService(null);
+                            }}
+                          >
+                            <Text style={[styles.subtaskText, isSubSelected && styles.subtaskTextSelected]}>
+                              {sub.name}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
+
+                    {/* Render specific services for the selected sub-task if available */}
+                    {cat.subTasks.find(s => s.name === selectedSubTask)?.services && (
+                      <View style={{ marginTop: 20 }}>
+                        <Text style={styles.subtasksTitle}>CHOOSE A SERVICE</Text>
+                        <View style={styles.servicesGrid}>
+                          {cat.subTasks.find(s => s.name === selectedSubTask)!.services!.map((service, sIdx) => {
+                            const isServiceSelected = selectedService === service;
+                            return (
+                              <TouchableOpacity 
+                                key={sIdx} 
+                                style={[styles.servicePill, isServiceSelected && styles.servicePillSelected]}
+                                onPress={() => setSelectedService(isServiceSelected ? null : service)}
+                              >
+                                <Text style={[styles.serviceText, isServiceSelected && styles.serviceTextSelected]}>{service}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    )}
                   </View>
                 )}
               </TouchableOpacity>
             );
           })}
         </View>
+        )}
       </ScrollView>
 
       {/* Floating Bottom Bar */}
@@ -226,7 +246,7 @@ const styles = StyleSheet.create({
   },
   cardSelected: {
     backgroundColor: '#EEF6F3',
-    borderColor: '#5C736C' // Or '#133330', looking at screenshot it is dark but not pitch black
+    borderColor: '#5C736C' 
   },
   selectedIndicator: {
     position: 'absolute',
@@ -287,7 +307,7 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
   expandedContent: {
-    paddingLeft: 74, // Align with text (16 padding + 42 icon + 16 gap)
+    paddingLeft: 74, 
     paddingRight: 16,
     paddingBottom: 20,
     paddingTop: 4
@@ -312,10 +332,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8
   },
+  subtaskPillSelected: {
+    backgroundColor: '#133330',
+    borderColor: '#133330'
+  },
   subtaskText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#0E2925'
+  },
+  subtaskTextSelected: {
+    color: '#FFFFFF'
+  },
+  servicesGrid: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8
+  },
+  servicePill: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10
+  },
+  servicePillSelected: {
+    backgroundColor: '#133330',
+    borderColor: '#133330'
+  },
+  serviceText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0E2925'
+  },
+  serviceTextSelected: {
+    color: '#FFFFFF'
   },
   bottomBar: {
     position: 'absolute',

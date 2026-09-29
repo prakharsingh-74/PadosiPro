@@ -1,9 +1,6 @@
 import { supabase } from '../config/database';
 
 export class TaskService {
-  /**
-   * Fetch full task catalogue grouped by category
-   */
   static async getCatalog() {
     const { data: categories, error: catError } = await supabase
       .from('categories')
@@ -31,7 +28,13 @@ export class TaskService {
       name: cat.name,
       description: cat.description,
       icon_name: cat.icon_name,
-      tasks: (tasks || []).filter((t) => t.category_id === cat.id)
+      is_soon: cat.is_soon,
+      tasks: (tasks || [])
+        .filter((t) => t.category_id === cat.id)
+        .map((t) => ({
+          ...t,
+          services: typeof t.services === 'string' ? JSON.parse(t.services) : (t.services || [])
+        }))
     }));
 
     return catalog;

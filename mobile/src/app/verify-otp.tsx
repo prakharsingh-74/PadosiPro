@@ -30,7 +30,7 @@ export default function VerifyOtpScreen() {
 
   // 30-Second Countdown Timer
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setTimeout>;
     if (timer > 0) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
