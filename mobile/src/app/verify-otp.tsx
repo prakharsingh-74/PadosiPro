@@ -5,13 +5,13 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { PadosiLogo } from '../components/PadosiLogo';

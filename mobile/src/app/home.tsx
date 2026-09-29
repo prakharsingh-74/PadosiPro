@@ -4,222 +4,270 @@ import {
   Text,
   View,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
-  Alert
+  TextInput,
 } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
-import { PadosiLogo } from '../components/PadosiLogo';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const userName = params.name || 'sdfsdfss'; // from screenshot
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out of PadosiPro?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: () => {
-          router.replace('/login');
-        }
-      }
-    ]);
+  const navigateToAccount = () => {
+    router.push({
+      pathname: '/account',
+      params: params // pass along the profile details to account screen
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Navigation Header */}
-      <View style={styles.header}>
-        <PadosiLogo showLabel={true} />
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Feather name="log-out" size={18} color={Colors.errorText} />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Manager Banner */}
-        <View style={styles.managerCard}>
-          <View style={styles.avatarBox}>
-            <Ionicons name="person" size={24} color={Colors.primaryButtonBg} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.managerTitle}>Lifestyle Manager Assigned</Text>
-            <Text style={styles.managerSub}>Ananya will be managing your selected household tasks.</Text>
-          </View>
-        </View>
-
-        {/* Selected Tasks Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Selected Tasks</Text>
-          <TouchableOpacity onPress={() => router.push('/task-selection')}>
-            <Text style={styles.editLink}>Edit Tasks</Text>
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Good afternoon, {userName}</Text>
+          <TouchableOpacity onPress={navigateToAccount}>
+            <Feather name="user" size={24} color="#0E2925" />
           </TouchableOpacity>
         </View>
 
-        {/* List of active tasks */}
-        <View style={styles.taskCard}>
-          <View style={styles.taskIconBox}>
-            <Feather name="sparkles" size={20} color={Colors.primaryButtonBg} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.taskName}>Deep Home Cleaning</Text>
-            <Text style={styles.taskCat}>Home & Maintenance</Text>
-          </View>
-          <View style={styles.statusChip}>
-            <Text style={styles.statusText}>Active</Text>
-          </View>
+        {/* Title & Search */}
+        <Text style={styles.title}>What do you need help with?</Text>
+        <View style={styles.searchContainer}>
+          <Feather name="search" size={18} color="#94A3B8" />
+          <TextInput 
+            style={styles.searchInput}
+            placeholder="AC leaking, cook for weekends..."
+            placeholderTextColor="#94A3B8"
+          />
         </View>
 
-        <View style={styles.taskCard}>
-          <View style={styles.taskIconBox}>
-            <Feather name="shopping-bag" size={20} color={Colors.primaryButtonBg} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.taskName}>Fresh Organic Grocery Pick-up</Text>
-            <Text style={styles.taskCat}>Errands & Shopping</Text>
-          </View>
-          <View style={styles.statusChip}>
-            <Text style={styles.statusText}>Active</Text>
-          </View>
+        {/* Categories Section */}
+        <Text style={styles.sectionHeader}>POPULAR WITH FAMILIES LIKE YOURS</Text>
+        <View style={styles.categoriesGrid}>
+          <CategoryPill icon="check-square" label="Errands & Daily Tasks" />
+          <CategoryPill icon="home" label="Home Services" />
+          <CategoryPill icon="map-pin" label="Travel & Tourism" />
+          <CategoryPill icon="heart" label="Health & Medical" />
+          <CategoryPill icon="users" label="Senior Care" />
+          <CategoryPill icon="calendar" label="Events & Management" />
         </View>
+        <TouchableOpacity onPress={() => router.push('/task-selection')}>
+          <Text style={styles.browseLink}>Browse everything we do <Feather name="arrow-right" size={14} /></Text>
+        </TouchableOpacity>
 
-        <View style={styles.taskCard}>
-          <View style={styles.taskIconBox}>
-            <Feather name="file-text" size={20} color={Colors.primaryButtonBg} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.taskName}>Utility Bill Management</Text>
-            <Text style={styles.taskCat}>Administrative & Pet Care</Text>
-          </View>
-          <View style={styles.statusChip}>
-            <Text style={styles.statusText}>Active</Text>
-          </View>
+        {/* How it works */}
+        <Text style={[styles.sectionHeader, { marginTop: 32, marginBottom: 16 }]}>HOW PADOSIPRO WORKS</Text>
+        <View style={styles.howItWorksList}>
+          <HowItWorksItem 
+            icon="message-square" 
+            title="Tell us what you need" 
+            desc="In your own words. No forms to hunt through." 
+          />
+          <HowItWorksItem 
+            icon="user" 
+            title="Your Lifestyle Manager takes it on" 
+            desc="One person who knows your family and follows it through." 
+          />
+          <HowItWorksItem 
+            icon="check-circle" 
+            title="You see it done" 
+            desc="Updates as things actually happen, with proof when it matters." 
+          />
         </View>
       </ScrollView>
+
+      {/* Bottom Floating Card */}
+      <View style={styles.bottomCardContainer}>
+        <View style={styles.bottomCard}>
+          <View>
+            <Text style={styles.lmLabel}>Your Lifestyle Manager</Text>
+            <Text style={styles.lmName}>Pilot LM</Text>
+          </View>
+          <TouchableOpacity style={styles.chatButton}>
+            <Feather name="message-circle" size={16} color="#0E2925" />
+            <Text style={styles.chatButtonText}>Chat</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
+// Components
+const CategoryPill = ({ icon, label }: { icon: any, label: string }) => (
+  <TouchableOpacity style={styles.pillContainer}>
+    <Feather name={icon} size={14} color="#137333" />
+    <Text style={styles.pillText}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const HowItWorksItem = ({ icon, title, desc }: { icon: any, title: string, desc: string }) => (
+  <View style={styles.howItWorksItem}>
+    <View style={styles.iconCircle}>
+      <Feather name={icon} size={18} color="#133330" />
+    </View>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.howItWorksTitle}>{title}</Text>
+      <Text style={styles.howItWorksDesc}>{desc}</Text>
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background
+    backgroundColor: '#FAF9F6' // Light off-white similar to profile setup
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 100 // space for bottom card
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 12
+    marginBottom: 24
   },
-  logoutButton: {
+  greeting: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0E2925'
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0E2925',
+    marginBottom: 16
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 52,
+    marginBottom: 32
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#0E2925'
+  },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#738C84',
+    marginBottom: 16,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase'
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16
+  },
+  pillContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#FEE2E2'
+    gap: 8
   },
-  logoutText: {
+  pillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0E2925'
+  },
+  browseLink: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.errorText
+    color: '#137333', // Dark green link
+    marginBottom: 16
   },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 40
+  howItWorksList: {
+    gap: 20
   },
-  managerCard: {
+  howItWorksItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: '#F0F7F4',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#D4E5DE',
-    marginBottom: 28
+    alignItems: 'flex-start',
+    gap: 16
   },
-  avatarBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.cardBackground,
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E6F2ED',
     justifyContent: 'center',
     alignItems: 'center'
   },
-  managerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.title,
-    marginBottom: 2
+  howItWorksTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0E2925',
+    marginBottom: 4
   },
-  managerSub: {
+  howItWorksDesc: {
     fontSize: 13,
-    color: Colors.subtext,
+    color: '#5C736C',
     lineHeight: 18
   },
-  sectionHeader: {
+  bottomCardContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 24,
+    backgroundColor: '#FAF9F6' // matches background
+  },
+  bottomCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.title
-  },
-  editLink: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.primaryButtonBg
-  },
-  taskCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 12
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3
   },
-  taskIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#F2F7F4',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  taskName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.inputText,
+  lmLabel: {
+    fontSize: 12,
+    color: '#738C84',
     marginBottom: 2
   },
-  taskCat: {
-    fontSize: 12,
-    color: Colors.subtext
-  },
-  statusChip: {
-    backgroundColor: '#E6F4EA',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8
-  },
-  statusText: {
-    fontSize: 12,
+  lmName: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#137333'
+    color: '#0E2925'
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0E2925'
   }
 });

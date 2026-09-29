@@ -5,7 +5,6 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert
 } from 'react-native';
@@ -13,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { PadosiLogo } from '../components/PadosiLogo';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const router = useRouter();
