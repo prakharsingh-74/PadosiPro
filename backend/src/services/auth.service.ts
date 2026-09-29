@@ -10,7 +10,6 @@ export class AuthService {
     const normalizedEmail = email.toLowerCase().trim();
     const userPassword = password || 'PadosiPro@2026';
 
-    // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')
       .select('id, is_verified')
@@ -21,7 +20,6 @@ export class AuthService {
       if (existingUser.is_verified) {
         throw { statusCode: 400, message: 'An account with this email address already exists. Please log in.' };
       } else {
-        // Unverified user registering again -> Resend OTP
         const otpResult = await OtpService.createAndSendOtp(existingUser.id, normalizedEmail);
         return {
           unverified: true,
@@ -32,10 +30,8 @@ export class AuthService {
       }
     }
 
-    // Hash password securely with bcrypt
     const passwordHash = await hashPassword(userPassword);
 
-    // Create user record
     const { data: newUser, error } = await supabase
       .from('users')
       .insert([
@@ -53,7 +49,6 @@ export class AuthService {
       throw { statusCode: 500, message: 'Failed to create user account.' };
     }
 
-    // If mobile number was provided, create initial profile draft
     if (mobileNumber) {
       await supabase.from('profiles').insert([
         {
@@ -65,7 +60,6 @@ export class AuthService {
       ]);
     }
 
-    // Generate & Send OTP
     const otpResult = await OtpService.createAndSendOtp(newUser.id, newUser.email);
 
     return {
@@ -82,7 +76,6 @@ export class AuthService {
   static async login(email: string, password: string) {
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Fetch user by email
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
@@ -93,15 +86,12 @@ export class AuthService {
       throw { statusCode: 401, message: 'Invalid email or password.' };
     }
 
-    // Verify password
     const isPasswordValid = await comparePassword(password, user.password_hash);
     if (!isPasswordValid) {
       throw { statusCode: 401, message: 'Invalid email or password.' };
     }
 
-    // Check if user is verified
     if (!user.is_verified) {
-      // Automatically send fresh OTP if unverified
       const otpResult = await OtpService.createAndSendOtp(user.id, user.email);
       return {
         is_verified: false,
@@ -111,26 +101,19 @@ export class AuthService {
       };
     }
 
-    // Check if user has completed profile setup
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
       .eq('user_id', user.id)
       .single();
 
-    const hasProfile = !!profile;
-
-    // Generate JWT token
     const token = generateToken(user.id, user.email);
 
     return {
       is_verified: true,
       token,
-      hasProfile,
-      user: {
-        id: user.id,
-        email: user.email
-      }
+      hasProfile: !!profile,
+      user: { id: user.id, email: user.email }
     };
   }
 }

@@ -1,17 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { env } from './env';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn('⚠️ Warning: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in environment variables.');
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error("Missing Supabase credentials in .env");
 }
 
-// Using Service Role Key for server-side trusted operations
-export const supabase = createClient(
-  env.SUPABASE_URL || 'https://placeholder.supabase.co',
-  env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
-  {
-    auth: {
-      persistSession: false
-    }
+export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    persistSession: false
   }
-);
+});

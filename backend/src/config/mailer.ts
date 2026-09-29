@@ -1,35 +1,33 @@
 import nodemailer from 'nodemailer';
-import { env } from './env';
+
 
 let transporter: nodemailer.Transporter | null = null;
 
 const getTransporter = async (): Promise<nodemailer.Transporter> => {
   if (transporter) return transporter;
 
-  // If custom SMTP settings are provided in .env (e.g. Gmail / Resend / Mailpit)
-  if (env.SMTP_USER && env.SMTP_PASS) {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     transporter = nodemailer.createTransport({
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: env.SMTP_SECURE,
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE === 'true',
       auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASS
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
       }
     });
     return transporter;
   }
 
-  // Fallback: If no SMTP credentials, try connecting to local Mailpit first, or Ethereal Email
   try {
     transporter = nodemailer.createTransport({
-      host: env.SMTP_HOST || 'localhost',
-      port: env.SMTP_PORT || 1025,
+      host: process.env.SMTP_HOST || 'localhost',
+      port: Number(process.env.SMTP_PORT) || 1025,
       secure: false
     });
     return transporter;
   } catch (error) {
-    // Generate an automatic Ethereal test account for real online email viewing
+    
     const testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
@@ -46,7 +44,7 @@ const getTransporter = async (): Promise<nodemailer.Transporter> => {
 
 export const sendOtpEmail = async (to: string, otp: string) => {
   const mailOptions = {
-    from: `"PadosiPro" <${env.FROM_EMAIL || 'noreply@padosipro.com'}>`,
+    from: `"PadosiPro" <${process.env.FROM_EMAIL || 'noreply@padosipro.com'}>`,
     to,
     subject: 'Verification Code for PadosiPro',
     html: `

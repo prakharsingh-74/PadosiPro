@@ -7,7 +7,6 @@ export class OtpService {
    * Create and send a new 6-digit OTP to user email
    */
   static async createAndSendOtp(userId: string, email: string): Promise<{ success: boolean; message: string; cooldownSeconds?: number }> {
-    // 1. Check Resend Cooldown (30 seconds)
     const { data: latestOtp } = await supabase
       .from('otps')
       .select('*')
@@ -31,21 +30,16 @@ export class OtpService {
       }
     }
 
-    // 2. Generate raw 6-digit OTP and store SHA-256 hash
     const rawOtp = generateOtp();
     const otpHash = hashOtp(rawOtp);
-
-    // 10 minutes expiry from now
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    // Mark previous unused OTPs for this user as used/invalid
     await supabase
       .from('otps')
       .update({ is_used: true })
       .eq('email', email)
       .eq('is_used', false);
 
-    // 3. Save new OTP entry
     const { error } = await supabase
       .from('otps')
       .insert([
@@ -65,7 +59,6 @@ export class OtpService {
       throw new Error('Failed to generate verification code.');
     }
 
-    // 4. Send Email via Mailer (Mailpit / SMTP)
     await sendOtpEmail(email, rawOtp);
 
     return {
@@ -78,7 +71,6 @@ export class OtpService {
    * Verify an OTP code against attempt limit (5 max), expiry (10 min), and hash
    */
   static async verifyOtp(email: string, rawOtp: string): Promise<{ success: boolean; message: string }> {
-    // 1. Fetch latest unused OTP for email
     const { data: otpRecord, error } = await supabase
       .from('otps')
       .select('*')
@@ -95,9 +87,7 @@ export class OtpService {
       };
     }
 
-    // 2. Check maximum wrong attempts (5 attempts limit)
     if (otpRecord.attempts_count >= 5) {
-      // Mark as used so they must request a new code
       await supabase
         .from('otps')
         .update({ is_used: true })
@@ -109,14 +99,12 @@ export class OtpService {
       };
     }
 
-    // 3. Increment attempt count
     const newAttemptsCount = otpRecord.attempts_count + 1;
     await supabase
       .from('otps')
       .update({ attempts_count: newAttemptsCount })
       .eq('id', otpRecord.id);
 
-    // 4. Check Expiry (10 minutes)
     const expiresAt = new Date(otpRecord.expires_at).getTime();
     if (Date.now() > expiresAt) {
       await supabase
@@ -130,7 +118,6 @@ export class OtpService {
       };
     }
 
-    // 5. Verify Hash
     const inputHash = hashOtp(rawOtp);
     if (inputHash !== otpRecord.otp_hash) {
       const attemptsRemaining = 5 - newAttemptsCount;
@@ -140,7 +127,6 @@ export class OtpService {
       };
     }
 
-    // 6. Mark OTP used & Mark User verified
     await supabase
       .from('otps')
       .update({ is_used: true })

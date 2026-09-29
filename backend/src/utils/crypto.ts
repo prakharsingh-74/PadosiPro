@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
+
 
 /**
  * Generate a cryptographically secure 6-digit numeric OTP code
@@ -38,12 +38,12 @@ export const comparePassword = async (password: string, hash: string): Promise<b
  * Generate JWT token for verified user
  */
 export const generateToken = (userId: string, email: string): string => {
-  return jwt.sign({ userId, email }, env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ userId, email }, process.env.JWT_SECRET as string, { expiresIn: '7d' });
 };
 
 /**
  * Verify JWT token
  */
 export const verifyToken = (token: string): { userId: string; email: string } => {
-  return jwt.verify(token, env.JWT_SECRET) as { userId: string; email: string };
+  return jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string; email: string };
 };

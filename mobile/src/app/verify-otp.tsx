@@ -7,8 +7,12 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { PadosiLogo } from '../components/PadosiLogo';
 import { authApi } from '../api/auth.api';
@@ -18,7 +22,7 @@ export default function VerifyOtpScreen() {
   const router = useRouter();
   const { email, mobileNumber } = useLocalSearchParams<{ email: string; mobileNumber: string }>();
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otpCode, setOtpCode] = useState('');
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,11 +41,11 @@ export default function VerifyOtpScreen() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleOtpChange = (text: string, index: number) => {
+  const handleOtpChange = (text: string) => {
     if (errorMsg) setErrorMsg('');
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
+    // Restrict input to numeric digits only, max length 6
+    const cleanText = text.replace(/\D/g, '').slice(0, 6);
+    setOtpCode(cleanText);
   };
 
   const handleResend = async () => {
@@ -61,8 +65,7 @@ export default function VerifyOtpScreen() {
   };
 
   const handleVerify = async () => {
-    const fullOtp = otp.join('');
-    if (fullOtp.length !== 6) {
+    if (otpCode.length !== 6) {
       setErrorMsg('Please enter all 6 digits of the OTP code.');
       return;
     }
@@ -70,7 +73,7 @@ export default function VerifyOtpScreen() {
     setLoading(true);
     try {
       if (email) {
-        await authApi.verifyOtp(email, fullOtp);
+        await authApi.verifyOtp(email, otpCode);
       }
       setLoading(false);
 
@@ -85,61 +88,86 @@ export default function VerifyOtpScreen() {
     }
   };
 
+  const isOtpComplete = otpCode.length === 6;
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <PadosiLogo />
-
-        <Text style={styles.title}>Verify Email</Text>
-        <Text style={styles.subtitle}>
-          We sent a 6-digit code to{' '}
-          <Text style={styles.emailHighlight}>{email || 'your email'}</Text>. Code expires in 10 minutes.
-        </Text>
-
-        {/* 6-Digit OTP Inputs */}
-        <View style={styles.otpRow}>
-          {otp.map((digit, idx) => (
-            <TextInput
-              key={idx}
-              style={[styles.otpBox, digit ? styles.otpBoxFilled : null, errorMsg ? styles.otpBoxError : null]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={digit}
-              onChangeText={(text) => handleOtpChange(text, idx)}
-            />
-          ))}
-        </View>
-
-        {!!errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
-
-        {/* Resend Cooldown Section */}
-        <View style={styles.resendSection}>
-          {canResend ? (
-            <TouchableOpacity onPress={handleResend}>
-              <Text style={styles.resendActiveText}>Resend OTP Code</Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.timerText}>
-              Resend code in <Text style={styles.timerBold}>{timer}s</Text>
-            </Text>
-          )}
-        </View>
-
-        {/* Verify Button */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.primaryButton, loading && styles.buttonDisabled]}
-            onPress={handleVerify}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.primaryButtonText}>Verify & Continue</Text>
-            )}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Top Back Navigation Button */}
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Feather name="chevron-left" size={20} color={Colors.brandText} />
+            <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+
+          {/* Logo Icon Only */}
+          <View style={styles.logoContainer}>
+            <PadosiLogo showLabel={false} />
+          </View>
+
+          {/* Heading */}
+          <Text style={styles.title}>Enter OTP</Text>
+          <Text style={styles.subtitle}>
+            We've sent a code to <Text style={styles.emailHighlight}>{email || 'your email'}</Text>. It expires in 10 minutes.
+          </Text>
+
+          {/* Single 6-digit Input Field */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>6-digit code</Text>
+            <View style={[styles.inputContainer, errorMsg ? styles.inputErrorBorder : null]}>
+              <TextInput
+                style={styles.input}
+                placeholder="- - - - - -"
+                placeholderTextColor={Colors.placeholderText}
+                keyboardType="number-pad"
+                maxLength={6}
+                value={otpCode}
+                onChangeText={handleOtpChange}
+              />
+            </View>
+            {!!errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+          </View>
+
+          {/* Resend Code Link */}
+          <View style={styles.resendContainer}>
+            {canResend ? (
+              <TouchableOpacity onPress={handleResend}>
+                <Text style={styles.resendActiveText}>Resend code</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.resendDisabledText}>
+                Resend code <Text style={{ fontWeight: '700' }}>({timer}s)</Text>
+              </Text>
+            )}
+          </View>
+
+          {/* Bottom Action Button */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                isOtpComplete ? styles.enabledDarkButton : styles.disabledButton
+              ]}
+              onPress={handleVerify}
+              activeOpacity={0.8}
+              disabled={!isOtpComplete || loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Verify</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -149,11 +177,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background
   },
-  content: {
-    flex: 1,
+  scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40
+    paddingTop: 16,
+    paddingBottom: 40,
+    flexGrow: 1
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginLeft: -4
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.brandText,
+    marginLeft: 2
+  },
+  logoContainer: {
+    marginBottom: 12
   },
   title: {
     fontSize: 32,
@@ -169,67 +212,75 @@ const styles = StyleSheet.create({
     marginBottom: 32
   },
   emailHighlight: {
-    fontWeight: '700',
-    color: Colors.title
-  },
-  otpRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16
-  },
-  otpBox: {
-    width: 48,
-    height: 56,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.cardBackground,
-    textAlign: 'center',
-    fontSize: 22,
-    fontWeight: '700',
-    color: Colors.inputText
-  },
-  otpBoxFilled: {
-    borderColor: Colors.borderFocus
-  },
-  otpBoxError: {
-    borderColor: Colors.borderError
-  },
-  errorText: {
-    fontSize: 13,
-    color: Colors.errorText,
-    marginBottom: 16,
-    textAlign: 'center'
-  },
-  resendSection: {
-    alignItems: 'center',
-    marginBottom: 32
-  },
-  timerText: {
-    fontSize: 14,
     color: Colors.subtext
   },
-  timerBold: {
-    fontWeight: '700',
-    color: Colors.title
+  formGroup: {
+    marginBottom: 16
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.labelText,
+    marginBottom: 8
+  },
+  inputContainer: {
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 52,
+    justifyContent: 'center'
+  },
+  inputErrorBorder: {
+    borderColor: Colors.borderError
+  },
+  input: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.inputText,
+    letterSpacing: 6,
+    paddingVertical: 0
+  },
+  errorText: {
+    fontSize: 12,
+    color: Colors.errorText,
+    marginTop: 6,
+    marginLeft: 4
+  },
+  resendContainer: {
+    alignItems: 'flex-start',
+    marginBottom: 32
   },
   resendActiveText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.primaryButtonBg
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.brandText
+  },
+  resendDisabledText: {
+    fontSize: 15,
+    color: Colors.subtext
   },
   buttonContainer: {
     marginTop: 'auto'
   },
   primaryButton: {
-    backgroundColor: Colors.darkButtonBg,
     borderRadius: 14,
     height: 54,
     justifyContent: 'center',
     alignItems: 'center'
   },
-  buttonDisabled: {
-    opacity: 0.7
+  disabledButton: {
+    backgroundColor: Colors.disabledButtonBg,
+    opacity: 0.8
+  },
+  enabledDarkButton: {
+    backgroundColor: Colors.darkButtonBg,
+    elevation: 3,
+    shadowColor: Colors.darkButtonBg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4
   },
   primaryButtonText: {
     color: Colors.primaryButtonText,

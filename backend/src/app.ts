@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { env } from './config/env';
+import 'dotenv/config';
 import { validateBody } from './middlewares/validate.middleware';
 import { authenticateToken } from './middlewares/auth.middleware';
 import { errorHandler } from './middlewares/error.middleware';
@@ -46,8 +46,8 @@ app.use(errorHandler);
 
 // Start Server
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(env.PORT, () => {
-    console.log(`🚀 PadosiPro Backend Server running on http://localhost:${env.PORT}`);
+  app.listen(process.env.PORT || 4000, () => {
+    console.log(`🚀 PadosiPro Backend Server running on http://localhost:${process.env.PORT || 4000}`);
   });
 }
 
