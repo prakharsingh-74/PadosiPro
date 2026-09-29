@@ -33,9 +33,21 @@ The backend handles the business logic, secure OTP generation, and database inte
    - `SUPABASE_URL`: Your Supabase project URL (found in Project Settings -> API).
    - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role key (found in the same API section). *Note: Keep this secret!*
    - `JWT_SECRET`: Any random long string (e.g., `my_super_secret_jwt_key_12345`).
-   - `SMTP_*`: (Optional) Your email provider credentials to send real OTP emails. If left blank, it defaults to a simulated email service (Ethereal) and prints a preview link in the terminal!
 
-### 3. Install & Run
+### 3. Setting up Gmail SMTP (Optional)
+If you want to send **real** OTP emails instead of using the simulated terminal link, you can easily use your Gmail account:
+1. Go to your Google Account -> **Security**.
+2. Ensure **2-Step Verification** is turned ON.
+3. Search for **App Passwords** in the search bar.
+4. Create a new App Password (name it "PadosiPro"). Google will give you a 16-character code.
+5. In your `.env` file, set the following:
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=465`
+   - `SMTP_USER=your.email@gmail.com`
+   - `SMTP_PASS=the_16_character_app_password_without_spaces`
+   - `FROM_EMAIL=your.email@gmail.com`
+
+### 4. Install & Run
 1. Open your terminal and go to the backend folder:
    ```bash
    cd backend
