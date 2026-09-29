@@ -1,121 +1,119 @@
-# PadosiPro — Lifestyle Management Service
+# PadosiPro Lifestyle Management App
 
-Welcome to the PadosiPro full-stack application repository. This project includes an **Express.js REST API Backend** connected to **Supabase (PostgreSQL)** and a **Native Mobile Application** built with **React Native (Expo)**.
+Welcome to the **PadosiPro** mobile application and backend server! This repository contains both the **React Native (Expo) mobile app** and the **Node.js (Express) backend API**. 
 
----
-
-## 🛠️ Stack & Architecture Overview
-
-- **Backend**: Node.js, Express, TypeScript, Zod, bcrypt, JWT, Nodemailer, Jest.
-- **Database**: Supabase PostgreSQL.
-- **Mobile**: React Native, Expo Router, TypeScript, Vector Icons.
-- **Local Mail Catcher**: Mailpit (captures real SMTP emails locally).
-- **Containerization**: Docker Compose (`docker-compose up --build`).
+The app features a rich, nested "Task Selection" catalogue and a secure OTP-based login system perfectly mimicking modern production apps.
 
 ---
 
-## 📋 Prerequisites
+## 🛠️ Prerequisites
 
-Before running the project locally, ensure you have installed:
-1. **Node.js** (v18 or v20+)
-2. **npm** or **yarn**
-3. **Docker & Docker Compose** (for running Mailpit & Backend locally with 1 command)
-4. **Expo Go app** on your mobile device (or Android Studio Emulator)
+Before you start, make sure you have the following installed on your computer:
+1. **Node.js** (v18 or newer recommended). You can download it from [nodejs.org](https://nodejs.org).
+2. **npm** (comes installed automatically with Node.js).
+3. **Supabase Account**: You'll need a free account at [Supabase](https://supabase.com) to host the PostgreSQL database.
+4. **Expo Go** app on your physical iPhone/Android, or an **Android Studio / iOS Simulator** running on your computer.
 
 ---
 
-## 🚀 Part A: Running Backend Locally (One Documented Command)
+## ⚙️ Backend Setup (Node.js & Supabase)
 
-### Option 1: Using Docker Compose (Recommended)
+The backend handles the business logic, secure OTP generation, and database interactions.
 
-From the project root directory, run:
+### 1. Database Setup (Supabase)
+1. Create a new project in Supabase.
+2. Go to the **SQL Editor** in your Supabase dashboard.
+3. Open `backend/src/db/migrations/001_initial_schema.sql` and run the contents in the SQL Editor to create the `users`, `profiles`, and `otps` tables.
+4. Open `backend/src/db/migrations/002_add_services.sql` and run it in the SQL Editor to add the `services` column.
 
-```bash
-docker-compose up --build
-```
+### 2. Configure Environment Variables
+1. Navigate to the `backend/` folder.
+2. You will see a file named `.env.example`. Make a copy of it and name the new file exactly `.env`.
+3. Open `.env` and fill in your Supabase credentials:
+   - `SUPABASE_URL`: Your Supabase project URL (found in Project Settings -> API).
+   - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role key (found in the same API section). *Note: Keep this secret!*
+   - `JWT_SECRET`: Any random long string (e.g., `my_super_secret_jwt_key_12345`).
 
-This single command will:
-- Spin up **Mailpit** at `http://localhost:8025` (Visual Web UI to inspect outgoing OTP emails).
-- Spin up the **Express REST API** at `http://localhost:4000`.
-
-### Option 2: Running Backend Directly via Node.js
-
-1. Navigate to the `backend` folder:
+### 3. Install & Run
+1. Open your terminal and go to the backend folder:
    ```bash
    cd backend
    ```
-2. Copy the `.env.example` file:
-   ```bash
-   cp .env.example .env
-   ```
-3. Install dependencies:
+2. Install the necessary packages:
    ```bash
    npm install
    ```
-4. Seed the database with 20+ tasks across 4 categories:
+3. Seed the database with our rich task categories:
    ```bash
    npm run seed
    ```
-5. Start the backend development server:
+4. Start the backend server:
    ```bash
    npm run dev
    ```
+   *The server should now be running on `http://localhost:4000`.*
 
-### 🧪 Running Backend Unit Tests
+---
 
-To run tests for risky logic (OTP generation, SHA-256 hashing, 10-minute expiry, 5-attempt limits, and 30s resend cooldown):
+## 📱 Mobile App Setup (Expo React Native)
 
+The mobile app is a cross-platform React Native app built using Expo Router.
+
+### 1. Configure the API URL
+The app needs to know where your backend is running.
+1. Open `mobile/src/api/config.ts`.
+2. By default, it connects to `10.0.2.2:4000` (which is how Android emulators talk to your computer) or `localhost:4000`. If you are testing on a **physical phone**, change the return value to your computer's local Wi-Fi IP address (e.g., `http://192.168.1.5:4000/api`).
+
+### 2. Install & Run
+1. Open a *new* terminal tab and go to the mobile folder:
+   ```bash
+   cd mobile
+   ```
+2. Install the necessary packages:
+   ```bash
+   npm install
+   ```
+3. Start the Expo server:
+   ```bash
+   npx expo start
+   ```
+4. **To view the app:**
+   - **Android Emulator**: Press `a` in the terminal.
+   - **iOS Simulator**: Press `i` in the terminal (Mac only).
+   - **Physical Device**: Scan the QR code shown in the terminal using the Expo Go app.
+
+---
+
+## 🧪 Testing the Logic
+
+We wrote unit tests for the most critical backend logic (OTP cooldowns, attempt limits, and expiry).
+To run the tests, open a terminal in the `backend/` folder and run:
 ```bash
-cd backend
-npm test
+npm run test
 ```
 
 ---
 
-## 📱 Part B: Running the Mobile App
+## 📦 How to Build the APK (Android)
 
-1. Navigate to the `mobile` folder:
-   ```bash
-   cd mobile
-   ```
-2. Install mobile dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Expo development server:
-   ```bash
-   npx expo start
-   ```
-4. Scan the displayed QR code with your mobile device via **Expo Go** or press `a` to launch the Android emulator.
+When you are ready to create a standalone `.apk` file that you can install on any Android phone (without needing Expo Go):
 
----
-
-## 📦 How to Build the Android APK
-
-To build the standalone `.apk` file for Android installation:
-
-1. Install Expo Application Services (EAS) CLI globally:
+1. **Install EAS CLI**: 
    ```bash
    npm install -g eas-cli
    ```
-2. Log into your Expo account:
+2. **Login to Expo**:
    ```bash
    eas login
    ```
-3. Run the local or cloud APK build command:
+3. **Configure the Project**: 
+   Inside the `mobile/` directory, run:
    ```bash
-   cd mobile
-   eas build --platform android --profile preview
+   eas build:configure
    ```
-   *Or for local offline build:*
+4. **Build the APK**:
+   We will build a "Preview" profile so it outputs an APK instead of an App Bundle (AAB). Run:
    ```bash
-   eas build --platform android --profile preview --local
+   eas build -p android --profile preview
    ```
-   The output `.apk` file will be generated in your build directory.
-
----
-
-## 📩 Mailpit Web UI (Inspecting OTP Emails)
-
-When a new user registers or requests a resend OTP, the email is sent locally via SMTP to **Mailpit**.
-Open `http://localhost:8025` in your browser to view all incoming 6-digit verification codes in real-time.
+5. Wait for the build to finish on Expo's servers. Once done, the terminal will provide a link to download your `.apk` file!

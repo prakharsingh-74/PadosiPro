@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load env variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -329,7 +328,7 @@ async function seed() {
     }
     console.log(`✓ Upserted Category: ${cat.name}`);
 
-    // 2. Insert Tasks (SubTasks)
+    // 2. Insert SubTasks
     if (cat.subTasks && cat.subTasks.length > 0) {
       const taskInserts = cat.subTasks.map(t => ({
         category_id: categoryData.id,

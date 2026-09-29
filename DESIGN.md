@@ -1,49 +1,39 @@
-# DESIGN.md — Architecture & Engineering Trade-Offs
+# PadosiPro - System Design Document
 
-## 🏛️ System Architecture
+## 🏗️ Architecture Overview
 
-The PadosiPro system is designed around a decoupled monorepo architecture:
-- **Client Layer**: Native React Native mobile app using Expo Router for stack-based screen transitions and persistent local token management (`AsyncStorage`).
-- **API Gateway / Server Layer**: Express.js REST API providing strict Zod schema validation, JWT auth middleware, centralized error handling, and rate-limiting rules.
-- **Security & Data Layer**: Supabase PostgreSQL DB with SHA-256 OTP hashing (raw OTP codes are never stored in the database), bcrypt password hashing, and cascading foreign keys.
-- **Local Mail Catcher**: Mailpit SMTP server containerized via Docker Compose.
+The PadosiPro architecture follows a classic, decoupled Client-Server model. It consists of three main pillars:
 
----
+1. **Frontend (Mobile App)**: Built with **React Native** and **Expo Router**. It focuses exclusively on presentation, UI interactions, and routing. It communicates with the backend via RESTful API calls.
+2. **Backend (API Server)**: Built with **Node.js, Express, and TypeScript**. It acts as the business logic orchestrator. It handles HTTP requests, validates payloads, enforces security rules (like OTP limits), and communicates with the database.
+3. **Database (Supabase / PostgreSQL)**: A relational database hosted on Supabase. It strictly holds the data schema and provides a robust Postgres engine for data integrity.
 
-## 🔒 Security & Risky Logic Implementation
+## ⚖️ Main Trade-offs
 
-1. **OTP Hashing & Expiry**:
-   - OTP codes are 6-digit cryptographically generated numeric strings.
-   - Only the `SHA-256` hash of the OTP is stored in the database to prevent plain-text exposure in database dumps.
-   - OTP records enforce a 10-minute expiry window (`expires_at < NOW()`).
-   - A strict limit of **at most 5 wrong attempts** is tracked per OTP record. Upon exceeding 5 attempts, the OTP is invalidated (`is_used = true`).
-   - Resend requests enforce a **30-second cooldown** (`last_sent_at < 30s`) to prevent spamming.
+### 1. REST API + Express vs. Direct Supabase Client on Mobile
+**Decision:** We built a dedicated Node.js backend instead of querying Supabase directly from the mobile app using `@supabase/supabase-js`.
+**Trade-off:**
+*   **Pros:** Better security abstraction. We can enforce complex logic (like OTP cooldowns, attempt limits, and custom email dispatching) seamlessly on the server without exposing database schemas or keys to the mobile client.
+*   **Cons:** Increases infrastructure complexity. We now have to manage and host a Node.js server instead of just a database.
 
-2. **Indian Mobile Number Validation**:
-   - Evaluated on both client and server via strict regex (`/^(?:\+91)?[6-9]\d{9}$/`).
+### 2. OTP in Database vs. In-Memory Cache (Redis)
+**Decision:** OTPs and their attempt counts are stored directly in a Postgres `otps` table.
+**Trade-off:**
+*   **Pros:** Much simpler to set up and deploy since we only need one infrastructure piece (Supabase). It provides persistent tracking of verification histories.
+*   **Cons:** Postgres is slower than an in-memory store like Redis for high-frequency writes. If the app scales to millions of concurrent logins, the `otps` table could become a bottleneck.
 
-3. **Optional Business Name Trade-off**:
-   - **Decision**: Made `Business Name` optional during first-login profile setup.
-   - **Rationale**: PadosiPro caters primarily to individual households who do not own a registered business. For home offices or small businesses, providing a business name helps personalize service delivery without creating an unnecessary barrier for residential households.
+## 🚫 What Was Left Out
 
----
+Given the time constraints, the following components were intentionally omitted:
+1. **Global State Management:** We relied on local React state (`useState`) and route parameters instead of introducing heavy libraries like Redux or Zustand, keeping the app lightweight.
+2. **Real SMS Integration:** OTPs are dispatched via email (`nodemailer`) instead of costly SMS APIs (like Twilio) to ensure free and easy testing during development.
+3. **Comprehensive E2E Testing:** While critical business logic is unit-tested in the backend, end-to-end mobile tests (via Detox or Appium) were left out.
+4. **Token Refresh Rotation:** The authentication system issues JWTs, but lacks a sophisticated refresh token rotation mechanism.
 
-## ⚖️ Main Engineering Trade-offs
+## 🚀 What I Would Do Next With Another Week
 
-1. **Supabase Client vs. ORM (Prisma/Drizzle)**:
-   - *Trade-off*: Used `@supabase/supabase-js` with service role privileges over a full ORM like Prisma.
-   - *Benefit*: Faster server startup times, lower container image footprint, and direct integration with Supabase features while retaining raw SQL schema migrations (`migrations/001_initial_schema.sql`).
-
-2. **Mailpit SMTP vs. Production Email Provider (Resend/SendGrid)**:
-   - *Trade-off*: Integrated Mailpit into Docker Compose for local development rather than requiring real API keys.
-   - *Benefit*: Ensures reviewers can run `docker-compose up` offline without external API rate limits or invalid credential errors.
-
----
-
-## 🚀 What Was Left Out & Next Week Roadmap
-
-If given another week, the next enhancements would include:
-1. **Push Notifications**: Expo Notifications integration to alert users when a Lifestyle Manager accepts or updates a selected task.
-2. **Real-time Chat with Lifestyle Manager**: Supabase Realtime WebSocket subscription allowing direct in-app messaging between the user and their assigned manager.
-3. **Task Progress Tracker**: Stepper timeline (`Requested` ➔ `Manager Assigned` ➔ `In Progress` ➔ `Completed`).
-4. **Offline Sync & Cache**: React Query integration with persistent offline caching for seamless task browsing when internet connectivity drops.
+If given another week to work on this, I would focus on:
+1. **React Query Integration:** Introduce `@tanstack/react-query` on the mobile app to handle caching, background fetching, and loading states automatically for the Task Catalogue.
+2. **Push Notifications:** Set up Expo Push Notifications so the backend can alert the user when their task status changes.
+3. **Redis Caching:** Introduce a Redis layer on the backend to handle rate-limiting, OTP caching, and to cache the heavy JSON payload of the Task Catalogue.
+4. **Offline Mode:** Use `AsyncStorage` or `WatermelonDB` to allow users to browse the Task Catalogue even when they drop network connectivity.
