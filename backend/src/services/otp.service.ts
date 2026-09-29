@@ -34,9 +34,10 @@ export class OtpService {
     const otpHash = hashOtp(rawOtp);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
+    // Delete any previous active OTPs for this email so they aren't stored permanently
     await supabase
       .from('otps')
-      .update({ is_used: true })
+      .delete()
       .eq('email', email)
       .eq('is_used', false);
 
@@ -90,7 +91,7 @@ export class OtpService {
     if (otpRecord.attempts_count >= 5) {
       await supabase
         .from('otps')
-        .update({ is_used: true })
+        .delete()
         .eq('id', otpRecord.id);
 
       return {
@@ -109,7 +110,7 @@ export class OtpService {
     if (Date.now() > expiresAt) {
       await supabase
         .from('otps')
-        .update({ is_used: true })
+        .delete()
         .eq('id', otpRecord.id);
 
       return {
@@ -129,7 +130,7 @@ export class OtpService {
 
     await supabase
       .from('otps')
-      .update({ is_used: true })
+      .delete()
       .eq('id', otpRecord.id);
 
     await supabase

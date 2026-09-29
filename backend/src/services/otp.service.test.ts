@@ -66,10 +66,11 @@ describe('OtpService', () => {
       });
 
       const mockUpdate = jest.fn().mockReturnThis();
+      const mockDelete = jest.fn().mockReturnThis();
       const mockInsert = jest.fn().mockResolvedValue({ error: null });
 
       (supabase.from as jest.Mock).mockImplementation((table) => ({
-        select: mockSelect,
+        delete: mockDelete,
         update: mockUpdate,
         insert: mockInsert,
         eq: mockEq,
@@ -105,7 +106,7 @@ describe('OtpService', () => {
       const mockUpdate = jest.fn().mockReturnThis();
 
       (supabase.from as jest.Mock).mockImplementation(() => ({
-        select: mockSelect,
+        delete: mockDelete,
         update: mockUpdate,
         eq: mockEq,
         order: mockOrder,
@@ -137,7 +138,7 @@ describe('OtpService', () => {
 
       (supabase.from as jest.Mock).mockImplementation(() => ({
         select: mockSelect,
-        update: mockUpdate,
+        delete: mockDelete,
         eq: mockEq,
         order: mockOrder,
         limit: mockLimit,

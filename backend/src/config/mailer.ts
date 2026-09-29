@@ -88,10 +88,5 @@ export const sendOtpEmail = async (to: string, otp: string) => {
     }
   } catch (error) {
     console.error(`❌ Failed to send OTP email via SMTP to ${to}:`, error);
-  } finally {
-    // ALWAYS log OTP clearly in console for easy development & testing
-    console.log(`\n========================================`);
-    console.log(`🔐 [OTP CODE FOR ${to}]: ${otp}`);
-    console.log(`========================================\n`);
   }
 };
