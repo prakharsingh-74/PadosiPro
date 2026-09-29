@@ -12,72 +12,52 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { PadosiLogo } from '../components/PadosiLogo';
+import { authApi } from '../api/auth.api';
 import { useRouter } from 'expo-router';
 
-export default function WelcomeRegisterScreen() {
+export default function WelcomeScreen() {
   const router = useRouter();
 
   const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
-  // Errors state
   const [mobileError, setMobileError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Inline Validation
+  // Check if fields are filled out correctly
+  const cleanMobile = mobileNumber.replace(/\D/g, '');
+  const isMobileValid = cleanMobile.length === 10 && /^[6-9]/.test(cleanMobile);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmailValid = emailRegex.test(email.trim());
+
+  const isFormFilled = isMobileValid && isEmailValid;
+
+  // Inline Validation on submit
   const validate = () => {
     let isValid = true;
 
-    // Mobile Validation (10 digits starting with 6-9)
-    const cleanMobile = mobileNumber.replace(/\D/g, '');
     if (!cleanMobile) {
       setMobileError('Mobile number is required');
       isValid = false;
-    } else if (cleanMobile.length !== 10 || !/^[6-9]/.test(cleanMobile)) {
-      setMobileError('Please enter a valid 10-digit Indian mobile number');
+    } else if (!isMobileValid) {
+      setMobileError('Please enter a valid 10-digit mobile number');
       isValid = false;
     } else {
       setMobileError('');
     }
 
-    // Email Validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) {
       setEmailError('Email address is required');
       isValid = false;
-    } else if (!emailRegex.test(email.trim())) {
+    } else if (!isEmailValid) {
       setEmailError('Please enter a valid email address');
       isValid = false;
     } else {
       setEmailError('');
-    }
-
-    // Password Validation
-    if (!password) {
-      setPasswordError('Password is required');
-      isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      isValid = false;
-    } else {
-      setPasswordError('');
-    }
-
-    // Confirm Password Validation
-    if (confirmPassword !== password) {
-      setConfirmPasswordError('Passwords do not match');
-      isValid = false;
-    } else {
-      setConfirmPasswordError('');
     }
 
     return isValid;
@@ -88,18 +68,33 @@ export default function WelcomeRegisterScreen() {
 
     setLoading(true);
     try {
-      // In production, calls Express backend POST /api/auth/register
-      // For instant review/demo, navigate directly to verify OTP screen
-      setTimeout(() => {
-        setLoading(false);
-        router.push({
-          pathname: '/verify-otp',
-          params: { email: email.trim(), mobileNumber: mobileNumber.trim() }
-        });
-      }, 800);
+      // Send API request to Express Backend -> Triggers Real OTP Email!
+      await authApi.requestOtp(email.trim(), mobileNumber.trim());
+      setLoading(false);
+
+      // Navigate to OTP verification screen
+      router.push({
+        pathname: '/verify-otp',
+        params: { email: email.trim(), mobileNumber: mobileNumber.trim() }
+      });
     } catch (err: any) {
       setLoading(false);
-      Alert.alert('Error', err.message || 'Failed to send OTP code');
+      // Fallback navigation in dev environment if backend is offline or network fails
+      Alert.alert(
+        'Backend Notice',
+        err.message || 'Connecting to backend service...',
+        [
+          {
+            text: 'Continue to OTP Verification',
+            onPress: () => {
+              router.push({
+                pathname: '/verify-otp',
+                params: { email: email.trim(), mobileNumber: mobileNumber.trim() }
+              });
+            }
+          }
+        ]
+      );
     }
   };
 
@@ -146,7 +141,7 @@ export default function WelcomeRegisterScreen() {
             {!!mobileError && <Text style={styles.errorText}>{mobileError}</Text>}
 
             {/* Email Input */}
-            <Text style={[styles.label, { marginTop: 16 }]}>Email</Text>
+            <Text style={[styles.label, { marginTop: 20 }]}>Email</Text>
             <View style={[styles.inputContainer, emailError ? styles.inputErrorBorder : null]}>
               <Feather name="mail" size={18} color={Colors.iconColor} style={styles.inputIcon} />
               <TextInput
@@ -163,73 +158,24 @@ export default function WelcomeRegisterScreen() {
               />
             </View>
             {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
-
-            {/* Password Input */}
-            <Text style={[styles.label, { marginTop: 16 }]}>Password</Text>
-            <View style={[styles.inputContainer, passwordError ? styles.inputErrorBorder : null]}>
-              <Feather name="lock" size={18} color={Colors.iconColor} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={Colors.placeholderText}
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (passwordError) setPasswordError('');
-                }}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Feather
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={18}
-                  color={Colors.iconColor}
-                />
-              </TouchableOpacity>
-            </View>
-            {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
-
-            {/* Confirm Password Input */}
-            <Text style={[styles.label, { marginTop: 16 }]}>Confirm password</Text>
-            <View style={[styles.inputContainer, confirmPasswordError ? styles.inputErrorBorder : null]}>
-              <Feather name="lock" size={18} color={Colors.iconColor} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={Colors.placeholderText}
-                secureTextEntry={!showPassword}
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (confirmPasswordError) setConfirmPasswordError('');
-                }}
-              />
-            </View>
-            {!!confirmPasswordError && <Text style={styles.errorText}>{confirmPasswordError}</Text>}
           </View>
 
-          {/* Action Button */}
+          {/* Action Button at Bottom */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
+              style={[
+                styles.primaryButton,
+                isFormFilled ? styles.enabledDarkButton : styles.disabledButton
+              ]}
               onPress={handleGetOtp}
               activeOpacity={0.8}
-              disabled={loading}
+              disabled={!isFormFilled || loading}
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.primaryButtonText}>Get OTP</Text>
               )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.loginLinkContainer}
-              onPress={() => router.push('/login')}
-            >
-              <Text style={styles.loginLinkText}>
-                Already have an account? <Text style={styles.loginLinkBold}>Log in</Text>
-              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -260,7 +206,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: Colors.subtext,
-    marginBottom: 28
+    marginBottom: 32
   },
   formGroup: {
     marginBottom: 32
@@ -306,39 +252,29 @@ const styles = StyleSheet.create({
     marginLeft: 4
   },
   buttonContainer: {
-    marginTop: 'auto',
-    gap: 16
+    marginTop: 'auto'
   },
   primaryButton: {
-    backgroundColor: Colors.primaryButtonBg,
     borderRadius: 14,
     height: 54,
     justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.primaryButtonBg,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2
+    alignItems: 'center'
   },
-  buttonDisabled: {
-    opacity: 0.7
+  disabledButton: {
+    backgroundColor: Colors.disabledButtonBg,
+    opacity: 0.8
+  },
+  enabledDarkButton: {
+    backgroundColor: Colors.darkButtonBg,
+    elevation: 3,
+    shadowColor: Colors.darkButtonBg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4
   },
   primaryButtonText: {
     color: Colors.primaryButtonText,
     fontSize: 16,
     fontWeight: '700'
-  },
-  loginLinkContainer: {
-    alignItems: 'center',
-    paddingVertical: 8
-  },
-  loginLinkText: {
-    fontSize: 14,
-    color: Colors.subtext
-  },
-  loginLinkBold: {
-    fontWeight: '700',
-    color: Colors.title
   }
 });

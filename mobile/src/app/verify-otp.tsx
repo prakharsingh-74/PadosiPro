@@ -9,14 +9,14 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { PadosiLogo } from '../components/PadosiLogo';
+import { authApi } from '../api/auth.api';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, mobileNumber } = useLocalSearchParams<{ email: string; mobileNumber: string }>();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
@@ -42,22 +42,25 @@ export default function VerifyOtpScreen() {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
-
-    // Auto-focus next input
-    if (text && index < 5) {
-      // Logic for input auto-advance
-    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!canResend) return;
     setTimer(30);
     setCanResend(false);
     setErrorMsg('');
-    Alert.alert('OTP Resent', `A new 6-digit code has been sent to ${email || 'your email'}.`);
+
+    try {
+      if (email) {
+        await authApi.resendOtp(email);
+        Alert.alert('OTP Resent', `A new 6-digit code has been sent to ${email}.`);
+      }
+    } catch (err: any) {
+      Alert.alert('Resend Failed', err.message || 'Could not resend OTP code.');
+    }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const fullOtp = otp.join('');
     if (fullOtp.length !== 6) {
       setErrorMsg('Please enter all 6 digits of the OTP code.');
@@ -65,11 +68,21 @@ export default function VerifyOtpScreen() {
     }
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      if (email) {
+        await authApi.verifyOtp(email, fullOtp);
+      }
       setLoading(false);
-      // Navigate to first-login profile setup screen
-      router.replace('/profile-setup');
-    }, 600);
+
+      // Navigate to profile setup screen
+      router.replace({
+        pathname: '/profile-setup',
+        params: { email, mobileNumber }
+      });
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMsg(err.message || 'Invalid verification code.');
+    }
   };
 
   return (
@@ -209,7 +222,7 @@ const styles = StyleSheet.create({
     marginTop: 'auto'
   },
   primaryButton: {
-    backgroundColor: Colors.primaryButtonBg,
+    backgroundColor: Colors.darkButtonBg,
     borderRadius: 14,
     height: 54,
     justifyContent: 'center',

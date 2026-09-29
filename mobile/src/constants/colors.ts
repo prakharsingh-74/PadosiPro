@@ -21,9 +21,11 @@ export const Colors = {
   iconColor: '#64748B',           // Input icon tint
   
   // Buttons
-  primaryButtonBg: '#87A99C',     // Sage green button background (Get OTP / Confirm)
+  primaryButtonBg: '#87A99C',     // Sage green default button background
+  darkButtonBg: '#133330',        // Dark teal enabled button background
+  disabledButtonBg: '#C5D6CD',   // Light muted sage button background when empty/disabled
+  disabledButtonText: '#FFFFFF',
   primaryButtonText: '#FFFFFF',   // White text on primary button
-  disabledButtonBg: '#CBD5E1',   // Muted button background
   
   // Feedback
   errorText: '#DC2626',
