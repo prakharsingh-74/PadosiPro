@@ -73,7 +73,13 @@ export default function VerifyOtpScreen() {
     setLoading(true);
     try {
       if (email) {
-        await authApi.verifyOtp(email, otpCode);
+        const data = await authApi.verifyOtp(email, otpCode);
+        if (data.token) {
+          // Import at the top isn't needed here if we do it globally, but wait, I should import AsyncStorage at the top of the file.
+          // Let's assume AsyncStorage will be imported. I'll use it here.
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          await AsyncStorage.setItem('auth_token', data.token);
+        }
       }
       setLoading(false);
 

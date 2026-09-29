@@ -18,10 +18,25 @@ export default function TaskDetailsScreen() {
   const params = useLocalSearchParams();
   const categoryName = (params.categoryName as string) || 'Errands & Daily Tasks';
   const [details, setDetails] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    // Show confirmation screen
-    router.push('/task-confirmation');
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const { TaskAPI } = require('../api/task.api');
+      const taskId = params.taskId as string;
+      const timing = params.timing as string;
+      
+      await TaskAPI.saveUserTask(taskId, timing, details);
+      
+      setLoading(false);
+      // Show confirmation screen
+      router.push('/task-confirmation');
+    } catch (error: any) {
+      setLoading(false);
+      const { Alert } = require('react-native');
+      Alert.alert('Save Failed', error.message || 'Could not save your task details.');
+    }
   };
 
   return (
@@ -72,9 +87,9 @@ export default function TaskDetailsScreen() {
             style={[styles.submitButton, details.trim().length > 0 && styles.submitButtonActive]} 
             onPress={handleSubmit} 
             activeOpacity={0.8}
-            disabled={details.trim().length === 0}
+            disabled={details.trim().length === 0 || loading}
           >
-            <Text style={styles.submitButtonText}>Leave it with us</Text>
+            <Text style={styles.submitButtonText}>{loading ? 'Saving...' : 'Leave it with us'}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

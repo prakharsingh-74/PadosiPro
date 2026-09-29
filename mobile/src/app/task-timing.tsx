@@ -39,11 +39,17 @@ const TIMING_OPTIONS = [
 
 export default function TaskTimingScreen() {
   const router = useRouter();
+  const params = require('expo-router').useLocalSearchParams();
   const [selectedTiming, setSelectedTiming] = useState<string | null>(null);
 
   const handleNext = () => {
-    // Navigate to next screen passing the timing and category info if needed
-    router.push('/task-details');
+    router.push({
+      pathname: '/task-details',
+      params: { 
+        ...params,
+        timing: selectedTiming
+      }
+    });
   };
 
   return (

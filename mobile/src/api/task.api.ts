@@ -15,20 +15,23 @@ export const TaskAPI = {
     }
   },
   
-  // Note: saveUserTasks requires a token from AsyncStorage which can be passed as an argument later
-  saveUserTasks: async (taskIds: string[], token: string) => {
+  saveUserTask: async (taskId: string, timing: string, notes: string) => {
     try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No authentication token found. Please log in again.');
+
       const response = await axios.post(`${API_BASE_URL}/tasks/select`, 
-        { task_ids: taskIds },
+        { task_id: taskId, timing, notes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return response.data;
     } catch (error: any) {
-      console.error('TaskAPI.saveUserTasks Error:', error);
+      console.error('TaskAPI.saveUserTask Error:', error);
       if (error.response && error.response.data) {
-        throw new Error(error.response.data.message || 'Failed to save tasks');
+        throw new Error(error.response.data.message || 'Failed to save task');
       }
-      throw new Error('Network error saving tasks.');
+      throw new Error('Network error saving task.');
     }
   }
 };

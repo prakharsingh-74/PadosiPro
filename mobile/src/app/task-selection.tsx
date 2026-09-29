@@ -11,6 +11,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SubTask {
+  id: string;
   name: string;
   services?: string[];
 }
@@ -25,7 +26,7 @@ interface Category {
 }
 
 import { ActivityIndicator } from 'react-native';
-import { TaskAPI } from '../api/task.api';;
+import { TaskAPI } from '../api/task.api';
 
 export default function TaskSelectionScreen() {
   const router = useRouter();
@@ -48,18 +49,16 @@ export default function TaskSelectionScreen() {
         icon: c.icon_name,
         isSoon: c.is_soon,
         subTasks: (c.tasks || []).map((t: any) => ({
+          id: t.id,
           name: t.name,
           services: t.services
         }))
       }));
       setCategories(mapped);
       
-      // If we didn't get a categoryId from params and we now have categories,
-      // expand the first one (or keep the param one).
       if (!params.categoryId && mapped.length > 0) {
         setExpandedCategory(mapped[0].id);
       } else if (params.categoryId) {
-        // Find if the ID passed actually exists, otherwise fallback
         const exists = mapped.find(c => c.id === params.categoryId);
         if (!exists && mapped.length > 0) setExpandedCategory(mapped[0].id);
       }
@@ -72,7 +71,7 @@ export default function TaskSelectionScreen() {
   }, [params.categoryId]);
 
   const handleContinue = () => {
-    router.push('/task-timing');
+    router.push({ pathname: '/task-timing', params: { taskId: selectedSubTask } });
   };
 
   return (
@@ -138,13 +137,13 @@ export default function TaskSelectionScreen() {
                     <Text style={styles.subtasksTitle}>WHAT KIND OF HELP?</Text>
                     <View style={styles.subtasksGrid}>
                       {cat.subTasks.map((sub, idx) => {
-                        const isSubSelected = selectedSubTask === sub.name;
+                        const isSubSelected = selectedSubTask === sub.id;
                         return (
                           <TouchableOpacity 
                             key={idx} 
                             style={[styles.subtaskPill, isSubSelected && styles.subtaskPillSelected]}
                             onPress={() => {
-                              setSelectedSubTask(isSubSelected ? null : sub.name);
+                              setSelectedSubTask(isSubSelected ? null : sub.id);
                               setSelectedService(null);
                             }}
                           >
@@ -157,11 +156,11 @@ export default function TaskSelectionScreen() {
                     </View>
 
                     {/* Render specific services for the selected sub-task if available */}
-                    {cat.subTasks.find(s => s.name === selectedSubTask)?.services && (
+                    {cat.subTasks.find(s => s.id === selectedSubTask)?.services && (
                       <View style={{ marginTop: 20 }}>
                         <Text style={styles.subtasksTitle}>CHOOSE A SERVICE</Text>
                         <View style={styles.servicesGrid}>
-                          {cat.subTasks.find(s => s.name === selectedSubTask)!.services!.map((service, sIdx) => {
+                          {cat.subTasks.find(s => s.id === selectedSubTask)!.services!.map((service, sIdx) => {
                             const isServiceSelected = selectedService === service;
                             return (
                               <TouchableOpacity 
