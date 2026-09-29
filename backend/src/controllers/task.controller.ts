@@ -18,11 +18,11 @@ export class TaskController {
   static async saveUserTasks(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;
-      const { task_ids } = req.body;
-      const selectedTasks = await TaskService.saveUserTasks(userId, task_ids);
+      const { task_id, timing, notes } = req.body;
+      const selectedTasks = await TaskService.saveUserTask(userId, task_id, timing, notes);
       res.status(200).json({
         success: true,
-        message: 'Tasks saved successfully!',
+        message: 'Task saved successfully!',
         tasks: selectedTasks
       });
     } catch (error) {

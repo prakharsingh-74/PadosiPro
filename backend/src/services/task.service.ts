@@ -22,7 +22,6 @@ export class TaskService {
       throw { statusCode: 500, message: 'Failed to load task catalogue.' };
     }
 
-    // Group tasks by category
     const catalog = (categories || []).map((cat) => ({
       id: cat.id,
       name: cat.name,
@@ -40,28 +39,24 @@ export class TaskService {
     return catalog;
   }
 
-  /**
-   * Save user selected tasks
-   */
-  static async saveUserTasks(userId: string, taskIds: string[]) {
-    if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
-      throw { statusCode: 400, message: 'Please select at least one task.' };
+  static async saveUserTask(userId: string, taskId: string, timing: string, notes: string) {
+    if (!taskId) {
+      throw { statusCode: 400, message: 'Task ID is required.' };
     }
 
-    // Clear previous selections for user
-    await supabase.from('user_tasks').delete().eq('user_id', userId);
-
-    // Insert new task selections
-    const recordsToInsert = taskIds.map((taskId) => ({
+    // Insert new task selection
+    const recordToInsert = {
       user_id: userId,
-      task_id: taskId
-    }));
+      task_id: taskId,
+      timing: timing || null,
+      notes: notes || null
+    };
 
-    const { error } = await supabase.from('user_tasks').insert(recordsToInsert);
+    const { error } = await supabase.from('user_tasks').insert(recordToInsert);
 
     if (error) {
-      console.error('Error saving user tasks:', error);
-      throw { statusCode: 500, message: 'Failed to save selected tasks.' };
+      console.error('Error saving user task:', error);
+      throw { statusCode: 500, message: 'Failed to save selected task.' };
     }
 
     return this.getUserTasks(userId);

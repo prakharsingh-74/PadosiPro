@@ -34,7 +34,7 @@ The backend handles the business logic, secure OTP generation, and database inte
    - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role key (found in the same API section). *Note: Keep this secret!*
    - `JWT_SECRET`: Any random long string (e.g., `my_super_secret_jwt_key_12345`).
 
-### 3. Setting up Gmail SMTP (Optional)
+### 3. Setting up Gmail SMTP
 If you want to send **real** OTP emails instead of using the simulated terminal link, you can easily use your Gmail account:
 1. Go to your Google Account -> **Security**.
 2. Ensure **2-Step Verification** is turned ON.

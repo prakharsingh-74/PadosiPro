@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS user_tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+    timing VARCHAR(255),
+    notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(user_id, task_id)
 );
