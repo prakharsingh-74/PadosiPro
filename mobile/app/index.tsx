@@ -68,18 +68,17 @@ export default function WelcomeScreen() {
 
     setLoading(true);
     try {
-      // Send API request to Express Backend -> Triggers Real OTP Email!
+      
       await authApi.requestOtp(email.trim(), mobileNumber.trim());
       setLoading(false);
 
-      // Navigate to OTP verification screen
       router.push({
         pathname: '/(auth)/verify-otp',
         params: { email: email.trim(), mobileNumber: mobileNumber.trim() }
       });
     } catch (err: any) {
       setLoading(false);
-      // Fallback navigation in dev environment if backend is offline or network fails
+      
       Alert.alert(
         'Backend Notice',
         err.message || 'Connecting to backend service...',

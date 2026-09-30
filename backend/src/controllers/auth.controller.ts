@@ -51,7 +51,6 @@ export class AuthController {
   static async resendOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;
-      // Get user ID by email
       const { supabase } = await import('../config/database');
       const { data: user } = await supabase
         .from('users')

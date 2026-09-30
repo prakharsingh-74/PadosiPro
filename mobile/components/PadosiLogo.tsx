@@ -11,7 +11,7 @@ export const PadosiLogo: React.FC<PadosiLogoProps> = ({ showLabel = true }) => {
   return (
     <View style={styles.container}>
       <Image 
-        source={require('../../assets/padosipro-logo.svg')} 
+        source={require('../assets/padosipro-logo.svg')} 
         style={styles.logoImage} 
         contentFit="contain"
       />

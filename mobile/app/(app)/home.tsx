@@ -10,13 +10,28 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TaskAPI } from '../../lib/task.api';
 
 export default function HomeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const userName = params.name || 'sdfsdfss'; // from screenshot
+
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    TaskAPI.getCatalog().then(data => {
+      setCategories(data);
+      setLoadingCategories(false);
+    }).catch(err => {
+      console.error(err);
+      setLoadingCategories(false);
+    });
+  }, []);
 
   const navigateToAccount = () => {
     router.push({
@@ -58,12 +73,18 @@ export default function HomeScreen() {
         {/* Categories Section */}
         <Text style={styles.sectionHeader}>POPULAR WITH FAMILIES LIKE YOURS</Text>
         <View style={styles.categoriesGrid}>
-          <CategoryPill icon="check-square" label="Errands & Daily Tasks" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-1' }})} />
-          <CategoryPill icon="home" label="Home Services" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-2' }})} />
-          <CategoryPill icon="map-pin" label="Travel & Tourism" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-3' }})} />
-          <CategoryPill icon="heart" label="Health & Medical" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-4' }})} />
-          <CategoryPill icon="users" label="Senior Care" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-5' }})} />
-          <CategoryPill icon="calendar" label="Events & Management" onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: 'cat-6' }})} />
+          {loadingCategories ? (
+            <Text style={{ color: '#94A3B8' }}>Loading categories...</Text>
+          ) : (
+            categories.slice(0, 6).map((cat: any) => (
+              <CategoryPill 
+                key={cat.id} 
+                icon={cat.icon_name || 'check-square'} 
+                label={cat.name} 
+                onPress={() => router.push({ pathname: '/task-selection', params: { categoryId: cat.id }})} 
+              />
+            ))
+          )}
         </View>
         <TouchableOpacity onPress={() => router.push('/task-selection')}>
           <Text style={styles.browseLink}>Browse everything we do <Feather name="arrow-right" size={14} /></Text>

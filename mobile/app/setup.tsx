@@ -13,12 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import { Feather } from '@expo/vector-icons';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
+  const { mobileNumber } = useLocalSearchParams<{ mobileNumber?: string }>();
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -89,7 +90,8 @@ export default function ProfileSetupScreen() {
       const { profileApi } = require('../lib/profile.api');
       
       await profileApi.saveProfile({
-        full_name: name,
+        name: name,
+        mobile_number: mobileNumber || '9999999999', // Fallback just in case
         address: address,
         society: society,
         flat: flat,

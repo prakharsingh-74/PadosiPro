@@ -7,7 +7,8 @@ export const profileApi = {
    * Save or update the user's profile
    */
   saveProfile: async (profileData: {
-    full_name: string;
+    name: string;
+    mobile_number: string;
     address: string;
     society?: string;
     flat?: string;

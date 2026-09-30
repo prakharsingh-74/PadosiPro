@@ -31,12 +31,13 @@ import { TaskAPI } from '../../lib/task.api';
 export default function TaskSelectionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const actualCategoryId = Array.isArray(params.categoryId) ? params.categoryId[0] : params.categoryId;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Expand the category passed from home screen, otherwise default to null initially
-  const [expandedCategory, setExpandedCategory] = useState<string | null>((params.categoryId as string) || null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>((actualCategoryId as string) || null);
   const [selectedSubTask, setSelectedSubTask] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
@@ -56,11 +57,15 @@ export default function TaskSelectionScreen() {
       }));
       setCategories(mapped);
       
-      if (!params.categoryId && mapped.length > 0) {
+      if (!actualCategoryId && mapped.length > 0) {
         setExpandedCategory(mapped[0].id);
-      } else if (params.categoryId) {
-        const exists = mapped.find(c => c.id === params.categoryId);
-        if (!exists && mapped.length > 0) setExpandedCategory(mapped[0].id);
+      } else if (actualCategoryId) {
+        const exists = mapped.find(c => c.id === actualCategoryId);
+        if (exists) {
+          setExpandedCategory(exists.id);
+        } else if (mapped.length > 0) {
+          setExpandedCategory(mapped[0].id);
+        }
       }
       
       setLoading(false);
@@ -68,7 +73,7 @@ export default function TaskSelectionScreen() {
       console.error(err);
       setLoading(false);
     });
-  }, [params.categoryId]);
+  }, [actualCategoryId]);
 
   const handleContinue = () => {
     router.push({ pathname: '/task-timing', params: { taskId: selectedSubTask } });
@@ -156,25 +161,31 @@ export default function TaskSelectionScreen() {
                     </View>
 
                     {/* Render specific services for the selected sub-task if available */}
-                    {cat.subTasks.find(s => s.id === selectedSubTask)?.services && (
-                      <View style={{ marginTop: 20 }}>
-                        <Text style={styles.subtasksTitle}>CHOOSE A SERVICE</Text>
-                        <View style={styles.servicesGrid}>
-                          {cat.subTasks.find(s => s.id === selectedSubTask)!.services!.map((service, sIdx) => {
-                            const isServiceSelected = selectedService === service;
-                            return (
-                              <TouchableOpacity 
-                                key={sIdx} 
-                                style={[styles.servicePill, isServiceSelected && styles.servicePillSelected]}
-                                onPress={() => setSelectedService(isServiceSelected ? null : service)}
-                              >
-                                <Text style={[styles.serviceText, isServiceSelected && styles.serviceTextSelected]}>{service}</Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-                      </View>
-                    )}
+                    {(() => {
+                      const selectedSub = cat.subTasks.find(s => s.id === selectedSubTask);
+                      if (selectedSub?.services && selectedSub.services.length > 0) {
+                        return (
+                          <View style={{ marginTop: 20 }}>
+                            <Text style={styles.subtasksTitle}>CHOOSE A SERVICE</Text>
+                            <View style={styles.servicesGrid}>
+                              {selectedSub.services.map((service, sIdx) => {
+                                const isServiceSelected = selectedService === service;
+                                return (
+                                  <TouchableOpacity 
+                                    key={sIdx} 
+                                    style={[styles.servicePill, isServiceSelected && styles.servicePillSelected]}
+                                    onPress={() => setSelectedService(isServiceSelected ? null : service)}
+                                  >
+                                    <Text style={[styles.serviceText, isServiceSelected && styles.serviceTextSelected]}>{service}</Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        );
+                      }
+                      return null;
+                    })()}
                   </View>
                 )}
               </TouchableOpacity>
@@ -186,7 +197,15 @@ export default function TaskSelectionScreen() {
 
       {/* Floating Bottom Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinue} activeOpacity={0.8}>
+        <TouchableOpacity 
+          style={[
+            styles.continueButton,
+            selectedSubTask ? styles.enabledDarkButton : styles.disabledButton
+          ]} 
+          onPress={handleContinue} 
+          disabled={!selectedSubTask}
+          activeOpacity={0.8}
+        >
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -385,11 +404,17 @@ const styles = StyleSheet.create({
     elevation: 5
   },
   continueButton: {
-    backgroundColor: '#133330', // Dark teal button
     borderRadius: 12,
     height: 52,
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  enabledDarkButton: {
+    backgroundColor: '#133330',
+  },
+  disabledButton: {
+    backgroundColor: '#91B3A7',
+    opacity: 0.8
   },
   continueButtonText: {
     fontSize: 16,
