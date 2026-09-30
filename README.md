@@ -41,11 +41,13 @@ If you want to send **real** OTP emails instead of using the simulated terminal 
 3. Search for **App Passwords** in the search bar.
 4. Create a new App Password (name it "PadosiPro"). Google will give you a 16-character code.
 5. In your `.env` file, set the following:
-   - `SMTP_HOST=smtp.gmail.com`
-   - `SMTP_PORT=465`
-   - `SMTP_USER=your.email@gmail.com`
-   - `SMTP_PASS=the_16_character_app_password_without_spaces`
-   - `FROM_EMAIL=your.email@gmail.com`
+   ```
+   - SMTP_HOST=smtp.gmail.com
+   - SMTP_PORT=465
+   - SMTP_USER=your.email@gmail.com
+   - SMTP_PASS=the_16_character_app_password_without_spaces
+   - FROM_EMAIL=youremail@gmail.com
+   ```
 
 ### 4. Install & Run
 1. Open your terminal and go to the backend folder:
@@ -74,7 +76,7 @@ The mobile app is a cross-platform React Native app built using Expo Router.
 
 ### 1. Configure the API URL
 The app needs to know where your backend is running.
-1. Open `mobile/src/api/config.ts`.
+1. Open `mobile/lib/config.ts`.
 2. By default, it connects to `10.0.2.2:4000` (which is how Android emulators talk to your computer) or `localhost:4000`. If you are testing on a **physical phone**, change the return value to your computer's local Wi-Fi IP address (e.g., `http://192.168.1.5:4000/api`).
 
 ### 2. Install & Run
@@ -99,7 +101,7 @@ The app needs to know where your backend is running.
 
 ## 🧪 Testing the Logic
 
-We wrote unit tests for the most critical backend logic (OTP cooldowns, attempt limits, and expiry).
+I have written unit tests for the most critical backend logic (OTP cooldowns, attempt limits, and expiry).
 To run the tests, open a terminal in the `backend/` folder and run:
 ```bash
 npm run test
@@ -114,7 +116,9 @@ https://github.com/user-attachments/assets/82f60409-189a-4afd-8424-2c256237409d
 
 ## 📦 How to Build the APK (Android)
 
-When you are ready to create a standalone `.apk` file that you can install on any Android phone (without needing Expo Go):
+> 💡 **Tip:** A pre-built, ready-to-install `.apk` file for Android is already available! You can download it directly from the **[Releases](https://github.com/prakharsingh-74/PadosiPro/releases)** section of this repository.
+
+If you want to build it yourself from scratch, follow these steps:
 
 1. **Install EAS CLI**: 
    ```bash
