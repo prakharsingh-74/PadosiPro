@@ -107,6 +107,11 @@ npm run test
 
 ---
 
+## Demo Video
+https://github.com/user-attachments/assets/82f60409-189a-4afd-8424-2c256237409d
+
+---
+
 ## 📦 How to Build the APK (Android)
 
 When you are ready to create a standalone `.apk` file that you can install on any Android phone (without needing Expo Go):
