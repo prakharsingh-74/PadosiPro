@@ -13,9 +13,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
-import { PadosiLogo } from '../components/PadosiLogo';
-import { authApi } from '../api/auth.api';
+import { Colors } from '../../constants/colors';
+import { PadosiLogo } from '../../components/PadosiLogo';
+import { authApi } from '../../lib/auth.api';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function VerifyOtpScreen() {
@@ -85,7 +85,7 @@ export default function VerifyOtpScreen() {
 
       // Navigate to profile setup screen
       router.replace({
-        pathname: '/profile-setup',
+        pathname: '/setup',
         params: { email, mobileNumber }
       });
     } catch (err: any) {

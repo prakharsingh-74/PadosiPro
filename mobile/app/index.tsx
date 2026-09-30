@@ -14,7 +14,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { PadosiLogo } from '../components/PadosiLogo';
-import { authApi } from '../api/auth.api';
+import { authApi } from '../lib/auth.api';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -74,7 +74,7 @@ export default function WelcomeScreen() {
 
       // Navigate to OTP verification screen
       router.push({
-        pathname: '/verify-otp',
+        pathname: '/(auth)/verify-otp',
         params: { email: email.trim(), mobileNumber: mobileNumber.trim() }
       });
     } catch (err: any) {
@@ -88,7 +88,7 @@ export default function WelcomeScreen() {
             text: 'Continue to OTP Verification',
             onPress: () => {
               router.push({
-                pathname: '/verify-otp',
+                pathname: '/(auth)/verify-otp',
                 params: { email: email.trim(), mobileNumber: mobileNumber.trim() }
               });
             }

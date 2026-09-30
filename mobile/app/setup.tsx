@@ -85,8 +85,8 @@ export default function ProfileSetupScreen() {
 
     setLoading(true);
     try {
-      // Import inline to avoid needing to do a multi_replace for imports
-      const { profileApi } = require('../api/profile.api');
+
+      const { profileApi } = require('../lib/profile.api');
       
       await profileApi.saveProfile({
         full_name: name,
@@ -98,9 +98,8 @@ export default function ProfileSetupScreen() {
       });
 
       setLoading(false);
-      // Proceed to Home, profile is now saved securely in the database!
       router.replace({
-        pathname: '/home'
+        pathname: '/(app)/home'
       });
     } catch (error: any) {
       setLoading(false);

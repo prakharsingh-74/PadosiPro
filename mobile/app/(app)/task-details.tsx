@@ -23,7 +23,7 @@ export default function TaskDetailsScreen() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { TaskAPI } = require('../api/task.api');
+      const { TaskAPI } = require('../../lib/task.api');
       const taskId = params.taskId as string;
       const timing = params.timing as string;
       

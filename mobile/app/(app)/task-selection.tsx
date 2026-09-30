@@ -26,7 +26,7 @@ interface Category {
 }
 
 import { ActivityIndicator } from 'react-native';
-import { TaskAPI } from '../api/task.api';
+import { TaskAPI } from '../../lib/task.api';
 
 export default function TaskSelectionScreen() {
   const router = useRouter();
