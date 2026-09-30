@@ -28,9 +28,20 @@ export class AuthController {
         });
       }
 
+      // Fetch user to generate JWT token upon successful verification
+      const { supabase } = await import('../config/database');
+      const { data: user } = await supabase.from('users').select('id, email').eq('email', email).single();
+      
+      let token = null;
+      if (user) {
+        const { generateToken } = await import('../utils/crypto');
+        token = generateToken(user.id, user.email);
+      }
+
       res.status(200).json({
         success: true,
-        message: result.message
+        message: result.message,
+        token
       });
     } catch (error) {
       next(error);

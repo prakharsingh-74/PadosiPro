@@ -52,11 +52,13 @@ export class TaskService {
       notes: notes || null
     };
 
-    const { error } = await supabase.from('user_tasks').insert(recordToInsert);
+    const { error } = await supabase.from('user_tasks').upsert(recordToInsert, {
+      onConflict: 'user_id, task_id'
+    });
 
     if (error) {
       console.error('Error saving user task:', error);
-      throw { statusCode: 500, message: 'Failed to save selected task.' };
+      throw { statusCode: 500, message: 'Failed to save selected task. ' + error.message };
     }
 
     return this.getUserTasks(userId);
